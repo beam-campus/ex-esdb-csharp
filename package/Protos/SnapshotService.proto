@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package reckondb.client.messages;
+
+import "ClientMessageDtos.proto";
+
+// Snapshot Management Service - Exposes ExESDBGater snapshot APIs
+service SnapshotManagement {
+    // Record/save a snapshot
+    rpc RecordSnapshot(RecordSnapshotRequest) returns (RecordSnapshotResponse);
+    
+    // Read a snapshot
+    rpc ReadSnapshot(ReadSnapshotRequest) returns (ReadSnapshotResponse);
+    
+    // Delete a snapshot
+    rpc DeleteSnapshot(DeleteSnapshotRequest) returns (DeleteSnapshotResponse);
+    
+    // List snapshots
+    rpc ListSnapshots(ListSnapshotsRequest) returns (ListSnapshotsResponse);
+}
+
+// Request/Response messages for Snapshot Management
+
+message RecordSnapshotRequest {
+    string store_id = 1;
+    string source_uuid = 2;
+    string stream_uuid = 3;
+    int64 version = 4;
+    bytes snapshot_data = 5; // JSON-encoded snapshot data
+    map<string, string> metadata = 6; // Optional metadata
+}
+
+message RecordSnapshotResponse {
+    bool success = 1;
+    string message = 2;
+    string snapshot_id = 3;
+}
+
+message ReadSnapshotRequest {
+    string store_id = 1;
+    string source_uuid = 2;
+    string stream_uuid = 3;
+    int64 version = 4;
+}
+
+message ReadSnapshotResponse {
+    bool success = 1;
+    string message = 2;
+    SnapshotRecord snapshot = 3;
+}
+
+message DeleteSnapshotRequest {
+    string store_id = 1;
+    string source_uuid = 2;
+    string stream_uuid = 3;
+    int64 version = 4;
+}
+
+message DeleteSnapshotResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ListSnapshotsRequest {
+    string store_id = 1;
+    string source_uuid = 2; // Use "*" for any source
+    string stream_uuid = 3; // Use "*" for any stream
+    int32 max_count = 4; // Optional limit
+}
+
+message ListSnapshotsResponse {
+    repeated SnapshotRecord snapshots = 1;
+    bool has_more = 2;
+    string next_token = 3; // For pagination
+}
+
+// Supporting message types
+
+message SnapshotRecord {
+    string snapshot_id = 1;
+    string store_id = 2;
+    string source_uuid = 3;
+    string stream_uuid = 4;
+    int64 version = 5;
+    bytes snapshot_data = 6;
+    map<string, string> metadata = 7;
+    int64 created_at = 8;
+    int64 size_bytes = 9;
+}

@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package reckondb.client.messages;
+
+import "ClientMessageDtos.proto";
+
+// ReckonDB EventStore gRPC Service
+// This service exposes the main EventStore operations via gRPC
+service EventStore {
+    // Write events to a stream
+    rpc WriteEvents(reckondb.client.messages.WriteEvents) returns (reckondb.client.messages.WriteEventsCompleted);
+    
+    // Read a single event from a stream
+    rpc ReadEvent(reckondb.client.messages.ReadEvent) returns (reckondb.client.messages.ReadEventCompleted);
+    
+    // Read multiple events from a stream
+    rpc ReadStreamEvents(reckondb.client.messages.ReadStreamEvents) returns (reckondb.client.messages.ReadStreamEventsCompleted);
+    
+    // Read all events from the global stream
+    rpc ReadAllEvents(reckondb.client.messages.ReadAllEvents) returns (reckondb.client.messages.ReadAllEventsCompleted);
+    
+    // Stream events from a specific stream (server streaming)
+    rpc SubscribeToStream(reckondb.client.messages.SubscribeToStream) returns (stream reckondb.client.messages.StreamEventAppeared);
+    
+    // Delete a stream
+    rpc DeleteStream(reckondb.client.messages.DeleteStream) returns (reckondb.client.messages.DeleteStreamCompleted);
+    
+    // Transaction operations
+    rpc StartTransaction(reckondb.client.messages.TransactionStart) returns (reckondb.client.messages.TransactionStartCompleted);
+    rpc WriteToTransaction(reckondb.client.messages.TransactionWrite) returns (reckondb.client.messages.TransactionWriteCompleted);
+    rpc CommitTransaction(reckondb.client.messages.TransactionCommit) returns (reckondb.client.messages.TransactionCommitCompleted);
+    
+    // Health check
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+    
+    // Get stream metadata/info
+    rpc GetStreamInfo(GetStreamInfoRequest) returns (GetStreamInfoResponse);
+}
+
+// Additional messages needed for the service
+message HealthCheckRequest {
+    string service = 1;
+}
+
+message HealthCheckResponse {
+    enum ServingStatus {
+        UNKNOWN = 0;
+        SERVING = 1;
+        NOT_SERVING = 2;
+    }
+    ServingStatus status = 1;
+}
+
+message GetStreamInfoRequest {
+    string event_stream_id = 1;
+}
+
+message GetStreamInfoResponse {
+    string event_stream_id = 1;
+    int64 current_version = 2;
+    int64 event_count = 3;
+    bool exists = 4;
+    int64 created_date = 5;
+}
+
+// Store management messages
+message ListStoresRequest {
+}
+
+message ListStoresResponse {
+    repeated StoreInfo stores = 1;
+}
+
+message StoreInfo {
+    string store_id = 1;
+    string name = 2;
+    bool active = 3;
+    int64 event_count = 4;
+    int64 stream_count = 5;
+}
+
+
+// Store Context Management
+message SetStoreContextRequest {
+    string store_id = 1;
+}
+
+message SetStoreContextResponse {
+    enum SetStoreContextResult {
+        SUCCESS = 0;
+        STORE_NOT_FOUND = 1;
+        ACCESS_DENIED = 2;
+        ERROR = 3;
+    }
+    SetStoreContextResult result = 1;
+    string message = 2;
+    string store_id = 3;
+}
+
+message GetStoreContextRequest {
+}
+
+message GetStoreContextResponse {
+    string store_id = 1;
+    string store_name = 2;
+    bool is_default = 3;
+}
+
+// Extend the service with store management
+service StoreManagement {
+    // List all available stores
+    rpc ListStores(ListStoresRequest) returns (ListStoresResponse);
+    
+    // Set the store context for this session
+    rpc SetStoreContext(SetStoreContextRequest) returns (SetStoreContextResponse);
+    
+    // Get the current store context
+    rpc GetStoreContext(GetStoreContextRequest) returns (GetStoreContextResponse);
+}

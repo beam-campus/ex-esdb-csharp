@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package reckondb.client.messages;
+
+import "ClientMessageDtos.proto";
+
+// Stream Operations Service - Additional stream utilities beyond core EventStore
+service StreamOperations {
+    // Get all streams in a store
+    rpc GetStreams(GetStreamsRequest) returns (GetStreamsResponse);
+    
+    // Get version of a stream
+    rpc GetStreamVersion(GetStreamVersionRequest) returns (GetStreamVersionResponse);
+    
+    // Stream events forward (server streaming)
+    rpc StreamForward(StreamForwardRequest) returns (stream StreamEventBatch);
+    
+    // Stream events backward (server streaming)  
+    rpc StreamBackward(StreamBackwardRequest) returns (stream StreamEventBatch);
+}
+
+// Request/Response messages for Stream Operations
+
+message GetStreamsRequest {
+    string store_id = 1;
+    int32 max_count = 2; // Optional limit
+    string continuation_token = 3; // For pagination
+}
+
+message GetStreamsResponse {
+    repeated StreamSummary streams = 1;
+    bool has_more = 2;
+    string next_token = 3;
+}
+
+message GetStreamVersionRequest {
+    string store_id = 1;
+    string stream_id = 2;
+}
+
+message GetStreamVersionResponse {
+    bool success = 1;
+    string message = 2;
+    int64 version = 3;
+    bool exists = 4;
+}
+
+message StreamForwardRequest {
+    string store_id = 1;
+    string stream_id = 2;
+    int64 start_version = 3;
+    int32 count = 4;
+    bool resolve_link_tos = 5;
+}
+
+message StreamBackwardRequest {
+    string store_id = 1;
+    string stream_id = 2;
+    int64 start_version = 3;
+    int32 count = 4;
+    bool resolve_link_tos = 5;
+}
+
+message StreamEventBatch {
+    repeated ResolvedIndexedEvent events = 1;
+    int64 next_version = 2;
+    bool is_end_of_stream = 3;
+    string stream_id = 4;
+    int32 batch_size = 5;
+}
+
+// Supporting message types
+
+message StreamSummary {
+    string stream_id = 1;
+    int64 current_version = 2;
+    int64 event_count = 3;
+    int64 created_at = 4;
+    int64 last_updated_at = 5;
+    bool is_deleted = 6;
+    map<string, string> metadata = 7;
+}
